@@ -1,4 +1,414 @@
-Embedded System
+***Embedded System***
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+The below information (inside \\\)  is about ARM processor but this concepts are applied everywhere in Embedded System 
+
+---------------------------------------------------------------
+🧠 Why Registers Exist?-->
+Registers are very small, very fast storage locations inside CPU. Instead of going to RAM again and again, ARM7 keeps data here.
+
+If CPU must access RAM anyway to copy data into registers, why not calculate directly using RAM data?
+
+Excellent question.
+Let’s clear this carefully.
+
+🧠 The Real Reason: Speed Difference
+
+The key idea is:
+
+👉 Accessing RAM once is OK.
+👉 Accessing RAM again and again is VERY slow.
+
+1️⃣ How Fast Are Registers vs RAM?
+
+Approximate speeds:
+
+Component		Access Time
+Registers			~1 CPU cycle ⚡
+Cache		~3–10 cycles
+RAM		~100+ cycles 🐢
+
+So RAM is 100 times slower than registers.
+
+2️⃣ What Happens During Calculation?
+
+Suppose program needs:
+
+A + B + C + D
+❌ If CPU Used RAM Directly
+
+CPU would do:
+
+Read A from RAM
+
+Read B from RAM
+
+Add
+
+Read C from RAM
+
+Add
+
+Read D from RAM
+
+Add
+
+👉 RAM accessed many times.
+
+⛔ Huge delay.
+
+✅ What ARM7 Actually Does
+
+CPU does:
+
+Load A → R0 (RAM accessed once)
+
+Load B → R1 (RAM accessed once)
+
+Load C → R2 (RAM accessed once)
+
+Load D → R3 (RAM accessed once)
+
+Now all values are inside CPU.
+
+Then:
+
+ADD R4, R0, R1
+ADD R4, R4, R2
+ADD R4, R4, R3
+
+👉 No more RAM access.
+
+✔ Very fast execution.
+
+3️⃣ Important Concept — Memory Access Is Expensive
+
+Think like this:
+
+🏠 RAM = kitchen
+🪑 Registers = plate in your hand
+
+Would you:
+
+Walk to kitchen for every bite? ❌
+
+Bring food once and eat from plate? ✅
+
+Registers are that plate.
+
+4️⃣ Another BIG Reason (Very Important)
+ALU Can Work Only With Registers
+
+In ARM processors:
+
+👉 Arithmetic operations cannot directly use RAM.
+
+Example:
+
+✅ Allowed:
+
+ADD R2, R0, R1
+
+❌ Not allowed:
+
+ADD R2, [RAM], [RAM]
+
+Why?
+
+Because processors designed by ARM Ltd. follow RISC architecture:
+
+👉 Load/Store Architecture
+
+Meaning:
+
+Load data from RAM → Registers
+
+Perform operations only on Registers
+
+Store result back to RAM
+
+5️⃣ Why RISC Uses This Design?
+
+Because it gives:
+
+✅ Faster execution
+✅ Simple hardware
+✅ Lower power consumption
+✅ Better pipelining
+✅ Predictable timing (important in embedded systems)
+
+🧠 Difference Between R13, R14 and R15 in ARM7-->
+
+Register	Name		Main Work			Simple Meaning
+R13	Stack Pointer (SP)	Points to stack top		📚 Stack manager
+R14	Link Register (LR)	Stores return address		🔙 Come-backaddress
+R15	Program Counter (PC)	Holds next instruction address	 ▶ Programrunner
+
+
+
+⭐ Short Answer First
+
+👉 SP does NOT store where to return.
+👉 LR stores where to return.
+
+Many students mix this.
+
+They do completely different jobs.
+
+⭐ Visual Flow
+
+Function Call
+     ↓
+LR ← return address saved
+     ↓
+SP stores temporary data on stack
+     ↓
+Function executes
+     ↓
+PC ← LR (return)
+
+✅ One-Line SPPU Answer
+
+LR (R14) stores return address during subroutine call, whereas SP (R13) points to the top of stack used for temporary data storage.
+
+
+1️⃣ What are Processor Modes?
+
+Processor mode defines how the ARM7 CPU operates under different conditions.
+
+ARM7 changes mode automatically when special events occur such as:
+
+reset
+
+interrupt
+
+error
+
+normal execution
+
+👉 Modes provide protection + fast interrupt handling.
+
+ARM7 Supports 7 Modes-->
+
+Mode		Type		Purpose
+
+User		Normal		Application execution
+System		Privileged	OS tasks
+Supervisor(SVC) Exception	After reset / SW interrupt
+IRQ		Exception	Normal interrupt handling
+FIQ		Exception	Fast interrupt handling
+Abort		Exception	Memory access fault
+Undefined	Exception	Undefined instruction
+
+2️⃣ Why Modes Are Needed?
+
+Without modes:
+
+❌ interrupt may destroy program data
+❌ processor state may be lost
+❌ unsafe execution
+
+Modes allow CPU to:
+
+✅ pause program safely
+✅ handle event
+✅ resume execution correctly
+
+3️⃣ Registers in ARM7
+
+ARM7 has 37 physical registers but only 16 visible at one time.
+
+Registers:
+
+R0–R12 → General purpose
+
+R13 → Stack Pointer (SP)
+
+R14 → Link Register (LR)
+
+R15 → Program Counter (PC)
+
+CPSR → Current status register
+
+SPSR → Saved status register (exception modes only)
+
+4️⃣ Banked Registers Concept ⭐ (VERY IMPORTANT)
+
+Some registers have separate copies for different modes.
+
+This is called banking.
+
+Example:
+
+User SP ≠ IRQ SP ≠ FIQ SP
+User LR ≠ IRQ LR ≠ FIQ LR
+
+Banked Registers-->
+
+Register	Banked?
+R0–R7		Shared
+R8–R12		Banked only in FIQ
+R13 (SP)	Banked
+R14 (LR)	Banked
+SPSR		Banked
+
+Purpose of Banked Registers-->
+
+When interrupt occurs:
+
+User Mode → IRQ Mode
+
+CPU instantly switches registers.
+
+✔ No saving to RAM
+✔ Faster interrupt response
+✔ No data corruption
+
+5️⃣ Important Question
+❓ If banked registers exist, why LR and SPSR?
+
+Banking solves only ONE problem:
+
+👉 Register protection
+
+But CPU still must remember:
+
+Where program stopped
+
+How processor was running
+
+That is why LR and SPSR are required.
+
+6️⃣ Role of Key Registers in Modes
+🔹 R13 — Stack Pointer (SP)
+
+Points to top of stack.
+
+Stack stores:
+
+temporary data
+
+local variables
+
+saved registers
+
+interrupt context
+
+Each mode has its own SP.
+
+👉 Interrupt uses separate stack.
+
+🔹 R14 — Link Register (LR)
+
+Stores return address.
+
+When exception occurs:
+
+LR_irq = address of next instruction
+
+Used later to return:
+
+PC ← LR_irq
+
+👉 LR controls where execution resumes.
+
+🔹 SPSR — Saved Program Status Register
+
+Stores previous processor state.
+
+During exception:
+
+SPSR_irq = CPSR
+
+Stores:
+
+flags
+
+mode bits
+
+interrupt status
+
+After interrupt:
+
+CPSR ← SPSR_irq
+
+👉 Processor state restored.
+
+7️⃣ Why NOT Use User Mode LR & SPSR?
+
+Reason 1 — Protect User Program
+
+User program already uses LR for function calls.
+
+If interrupt overwrites it:
+
+❌ return address lost
+❌ program crashes
+
+So ARM7 uses LR_irq, not LR_user.
+
+Reason 2 — User Mode Has No SPSR
+
+Only exception modes contain SPSR.
+
+User programs are not allowed to control processor state.
+
+Key Rule
+Ownership	Registers Used
+User program	User registers
+Interrupt system	Exception-mode registers
+
+This separation is a major design principle of processors developed by ARM Ltd..
+
+8️⃣ Complete IRQ Mode Operation (Step Flow)
+Program running (User Mode)
+        ↓
+IRQ interrupt occurs
+        ↓
+Processor switches to IRQ Mode
+        ↓
+LR_irq   ← return address saved
+SPSR_irq ← CPSR saved
+        ↓
+IRQ Service Routine executes
+        ↓
+CPSR restored from SPSR_irq
+PC restored from LR_irq
+        ↓
+Program resumes normally
+
+9️⃣ Difference Between Modes (Concept View)
+
+Feature			User Mode	IRQ Mode
+
+Privilege			No			Yes
+Interrupt handling	No			Yes
+Own SP			No			Yes
+Own LR			No			Yes
+SPSR present		No			Yes
+
+🔟 Special Note — FIQ Mode
+
+FIQ mode has extra banked registers (R8–R12).
+
+Reason:
+
+👉 Fastest possible interrupt handling.
+
+Less saving/restoring required.
+
+✅ Final Concept Summary (Memory Trick)
+Modes → Safety
+Banked Registers → Speed
+LR → Return Location
+SPSR → Restore Processor State
+SP → Manage Stack
+PC → Execute Program
+⭐ Perfect SPPU Conclusion
+
+ARM7 processor modes provide protected execution environments using banked registers for fast context switching, while LR and SPSR ensure correct restoration of program flow and processor status after exception handling.
+
+///////////////////////////////////////////////////////////////////////////
 
 **CPU(central processing unit)->
 
