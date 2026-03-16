@@ -408,6 +408,140 @@ PC → Execute Program
 
 ARM7 processor modes provide protected execution environments using banked registers for fast context switching, while LR and SPSR ensure correct restoration of program flow and processor status after exception handling.
 
+
+
+🔷 1️⃣ What Are “Normal Memory Instructions”?
+
+In a processor like the ARM7TDMI used inside LPC2148, the CPU mainly works with memory using two basic types of instructions:
+
+Load (LDR) → Read data from memory
+
+Store (STR) → Write data to memory
+
+These are called normal memory instructions because they are used to:
+
+Read variables
+
+Write variables
+
+Access arrays
+
+Store program data
+
+For example:
+
+int a = 10;
+
+Internally, the CPU:
+
+Uses a store instruction to write 10 into memory.
+
+When you later use:
+
+b = a;
+
+The CPU:
+
+Uses a load instruction to read from memory
+
+Uses a store instruction to write into another memory location
+
+These instructions are general-purpose.
+They are used for all normal memory operations.
+
+🔷 2️⃣ What Are “Separate I/O Instructions”?
+
+In some older processors (like Intel 8086), hardware devices are not treated like memory.
+
+Instead, they have a separate I/O address space.
+
+To access those devices, the processor uses special instructions, such as:
+
+IN → Read from I/O port
+
+OUT → Write to I/O port
+
+These are called separate I/O instructions because:
+
+They are different from memory instructions
+
+They work only for hardware ports
+
+They cannot be used for normal memory
+
+So in such systems:
+
+Memory access → MOV instruction
+I/O access → IN / OUT instruction
+
+Two different systems.
+
+🔷 3️⃣ What LPC2148 Does
+
+The LPC2148 does NOT use separate I/O instructions.
+
+Instead:
+
+Peripheral registers are given memory addresses.
+
+CPU uses normal LDR and STR instructions.
+
+No special I/O instruction exists.
+
+So when you write:
+
+IO0DIR = 0xFFFFFFFF;
+
+The CPU simply performs:
+
+A normal store instruction (STR)
+
+To a memory address in VPB region
+
+But that memory address is connected to GPIO hardware.
+
+So:
+
+Writing to memory → Changes hardware behavior.
+
+🔷 4️⃣ Simple Comparison
+🔹 In Separate I/O System (like 8086):
+
+Memory and I/O are different.
+
+Operation	Instruction Used
+Read memory	MOV
+Write memory	MOV
+Read device	IN
+Write device	OUT
+🔹 In LPC2148 (Memory-Mapped I/O):
+
+Memory and I/O share same space.
+
+Operation	Instruction Used
+Read memory	LDR
+Write memory	STR
+Read device	LDR
+Write device	STR
+
+Same instructions for everything.
+
+
+🔷 1️⃣ In-System Programming (ISP)
+✅ Definition
+
+In-System Programming (ISP) is a method of programming the Flash memory of the microcontroller while it is mounted in the system (circuit board), but the programming is done using an external programmer tool.
+
+In LPC2148, ISP is usually done through UART0 serial communication.
+
+
+🔷 2️⃣ In-Application Programming (IAP)
+✅ Definition
+
+In-Application Programming (IAP) allows the microcontroller to reprogram its own Flash memory while the application program is running.
+
+This means the microcontroller updates itself using internal software functions.
+
 ///////////////////////////////////////////////////////////////////////////
 
 **CPU(central processing unit)->
